@@ -1,0 +1,141 @@
+package api
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/bookmark-project-learn/bookmark-common-libs/middleware"
+	base62_helper "github.com/bookmark-project-learn/bookmark-common-libs/pkg/helpers/base62"
+	jwt_pkg "github.com/bookmark-project-learn/bookmark-common-libs/pkg/jwt"
+	base62_lib "github.com/bookmark-project-learn/bookmark-common-libs/pkg/lib/base62"
+	"github.com/bookmark-project-learn/bookmark-service/docs"
+	_ "github.com/bookmark-project-learn/bookmark-service/docs"
+
+	bookmark_cache "github.com/bookmark-project-learn/bookmark-service/internal/cache/bookmark"
+	"github.com/bookmark-project-learn/bookmark-service/internal/config"
+	"github.com/bookmark-project-learn/bookmark-service/internal/connection"
+	bookmark_handler "github.com/bookmark-project-learn/bookmark-service/internal/handler/bookmark"
+	health_check_handler "github.com/bookmark-project-learn/bookmark-service/internal/handler/health_check"
+	"github.com/bookmark-project-learn/bookmark-service/internal/handler/shorten"
+	bookmark_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/bookmark"
+	"github.com/bookmark-project-learn/bookmark-service/internal/repository/cache"
+	health_check_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/health_check"
+	url_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/shorten"
+	bookmark_service "github.com/bookmark-project-learn/bookmark-service/internal/service/bookmark"
+	health_check_service "github.com/bookmark-project-learn/bookmark-service/internal/service/health_check"
+	shorten_service "github.com/bookmark-project-learn/bookmark-service/internal/service/shorten"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+// Engine interface for app engine
+type Engine interface {
+	Run() error
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+}
+
+// engine struct for app engine
+type engine struct {
+	app          *gin.Engine
+	cfg          *config.Config
+	connector    connection.DBConnector
+	jwtGenerator jwt_pkg.JwtGenerator
+	jwtValidator jwt_pkg.JwtValidator
+}
+
+type EnginOpt struct {
+	App          *gin.Engine
+	Cfg          *config.Config
+	Connector    connection.DBConnector
+	JwtGenerator jwt_pkg.JwtGenerator
+	JwtValidator jwt_pkg.JwtValidator
+}
+
+// NewEngine creates a new engine instance
+func NewEngine(opt *EnginOpt) Engine {
+	api := &engine{
+		app:          opt.App,
+		cfg:          opt.Cfg,
+		connector:    opt.Connector,
+		jwtGenerator: opt.JwtGenerator,
+		jwtValidator: opt.JwtValidator,
+	}
+
+	api.initRoutes(opt.Cfg)
+	return api
+}
+
+// config Run starts the app engine
+func (e *engine) Run() error {
+	return e.app.Run(fmt.Sprintf(":%s", e.cfg.AppPort))
+}
+
+// override config ServeHTTP serves the app engine
+func (e *engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	e.app.ServeHTTP(w, req)
+}
+
+type handlers struct {
+	healthCheck health_check_handler.HealthCheck
+	shorten     shorten.ShorternUrl
+	bookmark    bookmark_handler.BookmarkHandler
+	config      *config.Config
+}
+
+func (e *engine) InitHandlers(cfg *config.Config) handlers {
+	serviceName := cfg.ServiceName
+	instanceID := cfg.InstanceID
+	redisClient := e.connector.GetRedisClient()
+	sqlDB := e.connector.GetSqlDB()
+	cacheRedis := cache.NewCache(redisClient)
+	// create helper
+	// code_gen := code_gen.NewKeyGenerator()
+	base62_helper := base62_helper.New(base62_lib.NewStdEncoding())
+	// create repository
+	healthCheckRepository := health_check_repository.NewPing(redisClient)
+	urlStorage := url_repository.NewURLStorage(redisClient)
+	bookmarkRepo := bookmark_repository.NewBookmarkRepository(sqlDB, base62_helper)
+	// create service
+	healthCheckService := health_check_service.NewHealthCheck(serviceName, instanceID, healthCheckRepository)
+	shortenService := shorten_service.NewShorternUrl(urlStorage, base62_helper, bookmarkRepo)
+
+	bookmarkSvc := bookmark_service.NewBookmarkService(bookmarkRepo)
+
+	// create cache
+	bookmarkCache := bookmark_cache.NewBookmarkCacheInstance(bookmarkSvc, cacheRedis)
+	// create handler
+	healthCheckHandler := health_check_handler.NewHealthCheck(healthCheckService)
+	shortenURLHandler := shorten.NewShortenURL(shortenService)
+
+	bookmarkHandler := bookmark_handler.NewBookmarkHandler(bookmarkCache)
+
+	return handlers{healthCheckHandler, shortenURLHandler, bookmarkHandler, cfg}
+}
+
+func (e *engine) initRoutes(cfg *config.Config) {
+	allHandlers := e.InitHandlers(cfg)
+
+	e.app.GET("/health-check", allHandlers.healthCheck.Ping)
+
+	docs.SwaggerInfo.BasePath = allHandlers.config.BasePath
+	e.app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	jwtMiddleware := middleware.NewJwtAuthMiddleware(e.jwtValidator)
+
+	v1Routes := e.app.Group("/v1")
+	{
+		// --- Public API
+		v1Routes.POST("/links/shorten", allHandlers.shorten.ShortenUrl)
+		v1Routes.GET("/links/redirect/:code", allHandlers.shorten.Redirect)
+
+		// -- Private Api
+		v1Routes.Use(jwtMiddleware.JwtAuth()) // middelware
+
+		v1Routes.POST("/bookmarks", allHandlers.bookmark.CreateBookmark)
+		v1Routes.GET("/bookmarks", allHandlers.bookmark.GetBookmarks)
+		v1Routes.PUT("/bookmarks/:id", allHandlers.bookmark.UpdateBookmark)
+		v1Routes.DELETE("/bookmarks/:id", allHandlers.bookmark.DeleteBookmark)
+
+	}
+}

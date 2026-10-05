@@ -1,0 +1,16 @@
+package entity
+
+import (
+	"github.com/bookmark-project-learn/bookmark-service/internal/models/base"
+)
+
+// Attachment represents a user-owned file/resource in the system.
+// Fields follow the project's JSON and GORM tag conventions.
+type Bookmark struct {
+	base.Base
+	Code        string `json:"code" gorm:"type:text;"`
+	Description string `json:"description" gorm:"type:text"`
+	Url         string `json:"url" gorm:"not null;type:text"`
+	UserId      string `json:"user_id" gorm:"not null;type:uuid"`
+	CodeInt     int    `json:"-" gorm:"not null;autoincrement;index:idx_code,unique"`
+}
