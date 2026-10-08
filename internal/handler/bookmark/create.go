@@ -5,7 +5,6 @@ import (
 
 	"github.com/bookmark-project-learn/bookmark-common-libs/pkg/request_ultils"
 	"github.com/bookmark-project-learn/bookmark-common-libs/pkg/response"
-	"github.com/bookmark-project-learn/bookmark-service/internal/handler/authorization"
 	"github.com/bookmark-project-learn/bookmark-service/internal/models/dto/api"
 	_ "github.com/bookmark-project-learn/bookmark-service/internal/models/dto/api"
 	bookmark_model "github.com/bookmark-project-learn/bookmark-service/internal/models/dto/api/bookmark"
@@ -32,9 +31,9 @@ func (h *bookmarkHandler) CreateBookmark(c *gin.Context) {
 		return
 	}
 
-	userId, err := authorization.GetSubjectFromClaims(c)
+	userId, err := request_ultils.GetSubjectFromClaims(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, response.ToDataResponse[*bookmark_model.BookmarkInfo](authorization.ClaimsNotFound))
+		c.JSON(http.StatusUnauthorized, response.ToDataResponse[*bookmark_model.BookmarkInfo](request_ultils.ClaimsNotFound))
 		return
 	}
 

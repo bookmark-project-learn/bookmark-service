@@ -3,8 +3,8 @@ package bookmark_handler
 import (
 	"net/http"
 
+	"github.com/bookmark-project-learn/bookmark-common-libs/pkg/request_ultils"
 	"github.com/bookmark-project-learn/bookmark-common-libs/pkg/response"
-	"github.com/bookmark-project-learn/bookmark-service/internal/handler/authorization"
 	"github.com/bookmark-project-learn/bookmark-service/internal/models/dto/api"
 	"github.com/gin-gonic/gin"
 )
@@ -23,9 +23,9 @@ import (
 func (handler *bookmarkHandler) DeleteBookmark(c *gin.Context) {
 	id := c.Params.ByName("id")
 	// authorization
-	userId, err := authorization.GetSubjectFromClaims(c)
+	userId, err := request_ultils.GetSubjectFromClaims(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, response.ToMessageReposnse(authorization.ClaimsNotFound))
+		c.JSON(http.StatusUnauthorized, response.ToMessageReposnse(request_ultils.ClaimsNotFound))
 		return
 	}
 
