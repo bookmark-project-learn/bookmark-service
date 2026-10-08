@@ -10,6 +10,7 @@ import (
 	base62_helper "github.com/bookmark-project-learn/bookmark-common-libs/pkg/helpers/base62"
 	jwt_pkg "github.com/bookmark-project-learn/bookmark-common-libs/pkg/jwt"
 	base62_lib "github.com/bookmark-project-learn/bookmark-common-libs/pkg/lib/base62"
+	"github.com/bookmark-project-learn/bookmark-common-libs/ratelimiter"
 	"github.com/bookmark-project-learn/bookmark-service/docs"
 	_ "github.com/bookmark-project-learn/bookmark-service/docs"
 
@@ -19,6 +20,7 @@ import (
 	bookmark_handler "github.com/bookmark-project-learn/bookmark-service/internal/handler/bookmark"
 	health_check_handler "github.com/bookmark-project-learn/bookmark-service/internal/handler/health_check"
 	"github.com/bookmark-project-learn/bookmark-service/internal/handler/shorten"
+	bookmark_middleware "github.com/bookmark-project-learn/bookmark-service/internal/middleware"
 	bookmark_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/bookmark"
 	"github.com/bookmark-project-learn/bookmark-service/internal/repository/cache"
 	health_check_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/health_check"
@@ -122,6 +124,8 @@ func (e *engine) initRoutes(cfg *config.Config) {
 	docs.SwaggerInfo.BasePath = allHandlers.config.BasePath
 	e.app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	jwtMiddleware := middleware.NewJwtAuthMiddleware(e.jwtValidator)
+	rateLimitRepository := ratelimiter.NewRateLimiter(e.connector.GetRedisClient())
+	userRateLimiter := bookmark_middleware.NewUserRateLimiter(rateLimitRepository)
 
 	v1Routes := e.app.Group("/v1")
 	{
@@ -130,7 +134,8 @@ func (e *engine) initRoutes(cfg *config.Config) {
 		v1Routes.GET("/links/redirect/:code", allHandlers.shorten.Redirect)
 
 		// -- Private Api
-		v1Routes.Use(jwtMiddleware.JwtAuth()) // middelware
+		v1Routes.Use(jwtMiddleware.JwtAuth())
+		v1Routes.Use(userRateLimiter.UserRateLimit())
 
 		v1Routes.POST("/bookmarks", allHandlers.bookmark.CreateBookmark)
 		v1Routes.GET("/bookmarks", allHandlers.bookmark.GetBookmarks)
