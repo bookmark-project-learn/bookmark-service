@@ -3,7 +3,7 @@ module github.com/bookmark-project-learn/bookmark-service
 go 1.26.4
 
 require (
-	github.com/bookmark-project-learn/bookmark-common-libs v0.0.1-alpha1
+	github.com/bookmark-project-learn/bookmark-common-libs v0.0.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
