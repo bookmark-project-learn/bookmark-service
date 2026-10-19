@@ -13,6 +13,7 @@ type Config struct {
 	ServiceName string `envconfig:"SERVICE_NAME" default:"book"`
 	InstanceID  string `envconfig:"INSTANCE_ID"`
 	BasePath    string `envconfig:"BASE_PATH" default:"/"`
+	QueueName   string `envconfig:"QUEUE_NAME" default:"bookmark_queue"`
 }
 
 func LoadConfig() (*Config, error) {

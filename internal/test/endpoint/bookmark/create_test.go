@@ -28,7 +28,8 @@ func TestBookmarkEndpoint_CreateBookmark(t *testing.T) {
 					Description: "integration test create",
 				})
 				resp := httptest.NewRecorder()
-				RouterSetupAuthorization(router, jwtMock, resp, req)
+				RouterSetupAuthorization(jwtMock, resp, req)
+				router.ServeHTTP(resp, req)
 				return resp
 			},
 			expectedStatusCode: http.StatusOK,
@@ -42,7 +43,8 @@ func TestBookmarkEndpoint_CreateBookmark(t *testing.T) {
 					Description: "bad request",
 				})
 				resp := httptest.NewRecorder()
-				RouterSetupAuthorization(router, jwtMock, resp, req)
+				RouterSetupAuthorization(jwtMock, resp, req)
+				router.ServeHTTP(resp, req)
 				return resp
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -54,7 +56,7 @@ func TestBookmarkEndpoint_CreateBookmark(t *testing.T) {
 		t.Run(tc.name, func(testItem *testing.T) {
 			testItem.Parallel()
 			jwtMock := jwt_pkg.NewMockJwt()
-			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock)
+			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock, nil)
 			rec := tc.setupTestHTTP(router, jwtMock)
 			assert.Equal(testItem, tc.expectedStatusCode, rec.Code)
 			assert.Contains(testItem, rec.Body.String(), tc.expectedContain)

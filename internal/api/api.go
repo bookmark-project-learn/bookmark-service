@@ -27,6 +27,7 @@ import (
 	url_repository "github.com/bookmark-project-learn/bookmark-service/internal/repository/shorten"
 	bookmark_service "github.com/bookmark-project-learn/bookmark-service/internal/service/bookmark"
 	health_check_service "github.com/bookmark-project-learn/bookmark-service/internal/service/health_check"
+	"github.com/bookmark-project-learn/bookmark-service/internal/service/queue"
 	shorten_service "github.com/bookmark-project-learn/bookmark-service/internal/service/shorten"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -110,8 +111,8 @@ func (e *engine) InitHandlers(cfg *config.Config) handlers {
 	// create handler
 	healthCheckHandler := health_check_handler.NewHealthCheck(healthCheckService)
 	shortenURLHandler := shorten.NewShortenURL(shortenService)
-
-	bookmarkHandler := bookmark_handler.NewBookmarkHandler(bookmarkCache)
+	queueSevice := queue.NewQueueService(e.connector.GetRabbitMqSender())
+	bookmarkHandler := bookmark_handler.NewBookmarkHandler(bookmarkCache, queueSevice)
 
 	return handlers{healthCheckHandler, shortenURLHandler, bookmarkHandler, cfg}
 }
@@ -141,6 +142,8 @@ func (e *engine) initRoutes(cfg *config.Config) {
 		v1Routes.GET("/bookmarks", allHandlers.bookmark.GetBookmarks)
 		v1Routes.PUT("/bookmarks/:id", allHandlers.bookmark.UpdateBookmark)
 		v1Routes.DELETE("/bookmarks/:id", allHandlers.bookmark.DeleteBookmark)
+
+		v1Routes.POST("/bookmarks/import", allHandlers.bookmark.ImportBookmarks)
 
 	}
 }

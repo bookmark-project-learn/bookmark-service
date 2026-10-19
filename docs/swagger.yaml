@@ -63,6 +63,11 @@ definitions:
     required:
     - url
     type: object
+  internal_handler_bookmark.ImportMessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
   internal_handler_health_check.HealthResponse:
     properties:
       instance_id:
@@ -238,6 +243,36 @@ paths:
       security:
       - BearerAuth: []
       summary: Update bookmark
+      tags:
+      - bookmark
+  /v1/bookmarks/import:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: CSV file to import
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler_bookmark.ImportMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler_bookmark.ImportMessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler_bookmark.ImportMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Import bookmarks from a CSV file
       tags:
       - bookmark
   /v1/links/redirect/{code}:

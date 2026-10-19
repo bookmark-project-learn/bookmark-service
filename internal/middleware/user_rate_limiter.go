@@ -12,7 +12,7 @@ import (
 
 // Define a rate limiter with a limit of 10 requests per second
 var limitRequestMax = 10
-var limitRequestDuration = 1 * time.Second // in seconds
+var limitRequestDuration = 20 * time.Second // in seconds
 var rateLimitKeyPrefix = "user_rate_limit_"
 
 type UserRateLimiter struct {
@@ -38,6 +38,7 @@ func (u *UserRateLimiter) UserRateLimit() gin.HandlerFunc {
 		count, err := u.rateLimiterRepository.GetCurrentRateLimit(c, rateLimitKey)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get current rate limit")
+			log.Error().Err(err).Msg(err.Error())
 		}
 
 		if count >= limitRequestMax {

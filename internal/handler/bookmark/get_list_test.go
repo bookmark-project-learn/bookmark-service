@@ -77,7 +77,7 @@ func TestBookmarkHandler_GetBookmarks(t *testing.T) {
 				ctx.Set("claims", jwt.MapClaims{"sub": "user-1"})
 			}
 			service := tc.setupMock(ctx)
-			handler := NewBookmarkHandler(service)
+			handler := NewBookmarkHandler(service, nil)
 			handler.GetBookmarks(ctx)
 
 			assert.Equal(t, tc.expectedCode, rec.Code)

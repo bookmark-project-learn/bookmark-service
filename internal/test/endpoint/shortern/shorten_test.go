@@ -223,7 +223,7 @@ func TestRedirect_Integration(t *testing.T) {
 }
 
 func SetApiEngine(t *testing.T, config *config.Config) api.Engine {
-	connectorMock, errConnector := connection.InitDBConnectorMock(t, nil)
+	connectorMock, errConnector := connection.InitDBConnectorMock(t, nil, nil)
 	if errConnector != nil {
 		t.Fatal(errConnector)
 	}

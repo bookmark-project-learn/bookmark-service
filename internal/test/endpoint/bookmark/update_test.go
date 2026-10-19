@@ -28,7 +28,8 @@ func TestBookmarkEndpoint_UpdateBookmark(t *testing.T) {
 					Description: "updated description",
 				})
 				resp := httptest.NewRecorder()
-				RouterSetupAuthorization(router, jwtMock, resp, req)
+				RouterSetupAuthorization(jwtMock, resp, req)
+				router.ServeHTTP(resp, req)
 				return resp
 			},
 			expectedStatusCode: http.StatusOK,
@@ -54,7 +55,7 @@ func TestBookmarkEndpoint_UpdateBookmark(t *testing.T) {
 		t.Run(tc.name, func(testItem *testing.T) {
 			testItem.Parallel()
 			jwtMock := jwt_pkg.NewMockJwt()
-			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock)
+			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock, nil)
 			rec := tc.setupTestHTTP(router, jwtMock)
 			assert.Equal(testItem, tc.expectedStatusCode, rec.Code)
 			assert.Contains(testItem, rec.Body.String(), tc.expectedContain)
