@@ -37,6 +37,9 @@ services:
       - 8080:8080
     env_file:
       - ../.env
+    volumes:
+      - ../privatekey.pem:/app/privatekey.pem
+      - ../publickey.pem:/app/publickey.pem
   rabbitmq:
     image: rabbitmq:alpine
     container_name: rabbitmq
