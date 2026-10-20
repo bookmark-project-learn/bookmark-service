@@ -118,7 +118,7 @@ func TestBookmarkHandler_CreateBookmark(t *testing.T) {
 				}
 			}
 			service := tc.setupMock(ctx, input)
-			handler := NewBookmarkHandler(service)
+			handler := NewBookmarkHandler(service, nil)
 			handler.CreateBookmark(ctx)
 
 			assert.Equal(t, tc.expectedCode, rec.Code)

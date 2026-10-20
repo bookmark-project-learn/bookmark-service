@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+
+	bookmark_handler "github.com/bookmark-project-learn/bookmark-service/internal/handler/bookmark"
 )
 
 func MakeJSONRequest(method, target string, body interface{}) *http.Request {
@@ -21,4 +23,14 @@ func MakeJSONRequest(method, target string, body interface{}) *http.Request {
 	req := httptest.NewRequest(method, target, bytes.NewBuffer(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	return req
+}
+
+func MakeMultipartRequest(target string, hasfile bool, content, fileContentType string) (*http.Request, error) {
+	bodyBytes, writer, err := bookmark_handler.CreateMultipartWriterWithContentString(hasfile, fileContentType, content)
+	if err != nil {
+		return nil, err
+	}
+	req := httptest.NewRequest("POST", target, bodyBytes)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, nil
 }

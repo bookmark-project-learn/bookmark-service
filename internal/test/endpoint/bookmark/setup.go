@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	jwt_pkg "github.com/bookmark-project-learn/bookmark-common-libs/pkg/jwt"
+	rabbitmq "github.com/bookmark-project-learn/bookmark-common-libs/pkg/rabbitmq"
+	rabbitmq_mocks "github.com/bookmark-project-learn/bookmark-common-libs/pkg/rabbitmq/mocks"
 	"github.com/bookmark-project-learn/bookmark-service/internal/api"
 	"github.com/bookmark-project-learn/bookmark-service/internal/config"
 	"github.com/bookmark-project-learn/bookmark-service/internal/connection"
+	"github.com/bookmark-project-learn/bookmark-service/internal/infrastructure"
 	"github.com/bookmark-project-learn/bookmark-service/internal/test/data/fixture"
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -24,27 +26,25 @@ func buildBookmarkIntegrationConfig() *config.Config {
 	}
 }
 
-func BuildBookmarkApiEngine(t *testing.T, fix fixture.Fixture, jwtMock *jwt_pkg.MockJwt) api.Engine {
+func BuildBookmarkApiEngine(t *testing.T, fix fixture.Fixture, jwtMock *jwt_pkg.MockJwt, rabbitMqSenderMock rabbitmq.RabbitMqSender) api.Engine {
 	t.Helper()
-	connectorMock, err := connection.InitDBConnectorMock(t, fix)
+	connectorMock, err := connection.InitDBConnectorMock(t, fix, rabbitMqSenderMock)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	engine := api.NewEngine(&api.EnginOpt{
-		App:          gin.New(),
-		Cfg:          buildBookmarkIntegrationConfig(),
-		Connector:    connectorMock,
-		JwtGenerator: jwtMock.JwtGenarate,
-		JwtValidator: jwtMock.JwtValidate,
-	})
+	return infrastructure.CoreNewApi(connectorMock.GetRedisClient(), connectorMock.GetSqlDB(), connectorMock.GetRabbitMqSender(), buildBookmarkIntegrationConfig(), jwtMock.JwtGenarate, jwtMock.JwtValidate)
+}
 
-	return engine
+func GetRabbitMqMock(t *testing.T, errorPublishMessageExpected error) *rabbitmq_mocks.RabbitMqSender {
+	rabbitMqSenderMock := rabbitmq_mocks.NewRabbitMqSender(t, errorPublishMessageExpected)
+	return rabbitMqSenderMock
+
 }
 
 var dummyUserId = "4e90220a-51f6-49e4-bc0e-44e2f321475a"
 
-func RouterSetupAuthorization(eng api.Engine, jwtMock *jwt_pkg.MockJwt, w http.ResponseWriter, req *http.Request) {
+func RouterSetupAuthorization(jwtMock *jwt_pkg.MockJwt, w http.ResponseWriter, req *http.Request) {
 	claims := jwt.MapClaims{
 		"sub": dummyUserId,
 	}
@@ -54,7 +54,6 @@ func RouterSetupAuthorization(eng api.Engine, jwtMock *jwt_pkg.MockJwt, w http.R
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	eng.ServeHTTP(w, req)
 }
 
 func buildBookmarkURL(path string) string {

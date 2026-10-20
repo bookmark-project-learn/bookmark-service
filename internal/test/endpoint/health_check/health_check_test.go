@@ -70,7 +70,7 @@ func TestHealthCheck_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(testItem *testing.T) {
 			testItem.Parallel()
-			connectorMock, errConnector := connection.InitDBConnectorMock(testItem, nil)
+			connectorMock, errConnector := connection.InitDBConnectorMock(testItem, nil, nil)
 			if errConnector != nil {
 				testItem.Fatal(errConnector)
 			}

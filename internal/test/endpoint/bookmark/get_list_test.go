@@ -24,7 +24,8 @@ func TestBookmarkEndpoint_GetBookmarks(t *testing.T) {
 			setupTestHTTP: func(router api.Engine, jwtMock *jwt_pkg.MockJwt) *httptest.ResponseRecorder {
 				req := general_helpers.MakeJSONRequest(http.MethodGet, buildBookmarkURL("?page=1&limit=10&sort=created_at+desc"), nil)
 				resp := httptest.NewRecorder()
-				RouterSetupAuthorization(router, jwtMock, resp, req)
+				RouterSetupAuthorization(jwtMock, resp, req)
+				router.ServeHTTP(resp, req)
 				return resp
 			},
 			expectedStatusCode: http.StatusOK,
@@ -47,7 +48,7 @@ func TestBookmarkEndpoint_GetBookmarks(t *testing.T) {
 		t.Run(tc.name, func(testItem *testing.T) {
 			testItem.Parallel()
 			jwtMock := jwt_pkg.NewMockJwt()
-			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock)
+			router := BuildBookmarkApiEngine(testItem, fixture.NewBookmarkTestCase(testItem), jwtMock, nil)
 			rec := tc.setupTestHTTP(router, jwtMock)
 			assert.Equal(testItem, tc.expectedStatusCode, rec.Code)
 			assert.Contains(testItem, rec.Body.String(), tc.expectedContain)
