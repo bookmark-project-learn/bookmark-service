@@ -38,13 +38,13 @@ func CreateApi() api.Engine {
 	}
 
 	// connector
-	ctx_sender, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	conn, err := rabbitmq.NewConnection(ctx_sender, cfg.QueueName)
+	conn, err := rabbitmq.NewConnection(ctx, cfg.QueueName)
 	if err != nil {
 		panic("failed to connect to rabbitmq: " + err.Error())
 	}
-	rabbitMqSender, err := rabbitmq.NewRabbitSender(ctx_sender, cfg.QueueName, conn)
+	rabbitMqSender, err := conn.GetSender(ctx)
 	if err != nil {
 		panic("failed to connect to rabbitmq: " + err.Error())
 	}

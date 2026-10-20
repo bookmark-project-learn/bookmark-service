@@ -142,8 +142,8 @@ github.com/bkaradzic/go-lz4 v1.0.0 h1:RXc4wYsyz985CkXXeX04y4VnZFGG8Rd43pRaHsOXAK
 github.com/bkaradzic/go-lz4 v1.0.0/go.mod h1:0YdlkowM3VswSROI7qDxhRvJ3sLhlFrRRwjwegp5jy4=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 h1:DDGfHa7BWjL4YnC6+E63dPcxHo2sUxDIu8g3QgEJdRY=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dRnpXw/yCqJaO+ZrUyxD+3VXMFFr56k5XYrpB4=
-github.com/bookmark-project-learn/bookmark-common-libs v0.0.2-beta.2 h1:Cvl0QB2OOr3SV9TjHFiGby4UpxxE/dci/4/HpXirNXE=
-github.com/bookmark-project-learn/bookmark-common-libs v0.0.2-beta.2/go.mod h1:CAR5c3moPZW4SHg7qogQFS7PkWW4GUHNCnA3eI1ThLY=
+github.com/bookmark-project-learn/bookmark-common-libs v0.0.2-beta.3 h1:4ykVF0kRPtwY1FSwts9lKQqXqZEqUDa+LB/DgT5CrkI=
+github.com/bookmark-project-learn/bookmark-common-libs v0.0.2-beta.3/go.mod h1:CAR5c3moPZW4SHg7qogQFS7PkWW4GUHNCnA3eI1ThLY=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
